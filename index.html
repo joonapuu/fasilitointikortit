@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="fi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Pöytäopas">
+<meta name="robots" content="noindex">
+<title>Työpajan pöytäopas</title>
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style>
+<meta name="theme-color" content="#16303b">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@500;600;700&family=Public+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: one-screen phone app. Swipeable cards (one per task), fixed bottom navigation, sheets for overview, rescue questions, principles. */
+:root{
+  --bg:#eef1f2; --surface:#ffffff; --surface2:#e3e9eb; --ink:#14232b; --muted:#566872;
+  --line:#cfd8dc; --accent:#0d6b73; --accent-ink:#ffffff; --signal:#b4540a; --signal-bg:#fbeadb; --done:#8a9aa2;
+  --display:'Familjen Grotesk',system-ui,sans-serif; --body:'Public Sans',system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f1a1f; --surface:#17262d; --surface2:#203440; --ink:#e6eef1; --muted:#9db1ba;
+  --line:#2c424d; --accent:#4fc3cc; --accent-ink:#06242a; --signal:#f0a35e; --signal-bg:#3a2a1a; --done:#5d727c; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1a1f; --surface:#17262d; --surface2:#203440; --ink:#e6eef1; --muted:#9db1ba;
+  --line:#2c424d; --accent:#4fc3cc; --accent-ink:#06242a; --signal:#f0a35e; --signal-bg:#3a2a1a; --done:#5d727c; color-scheme:dark}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5;
+  padding-left:max(0px,env(safe-area-inset-left,0px));padding-right:max(0px,env(safe-area-inset-right,0px));overflow:hidden}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,a:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.app{height:100%;display:flex;flex-direction:column}
+.top{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 16px 8px;border-bottom:1px solid var(--line);background:var(--surface)}
+.brand{font-family:var(--display);font-weight:700;font-size:15px;line-height:1.15;letter-spacing:.01em;min-width:0}
+.brand small{display:block;font-family:var(--body);font-weight:500;font-size:12px;color:var(--muted);letter-spacing:0}
+.tools{display:flex;gap:6px;flex-shrink:0}
+.tbtn{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:7px 10px;font-size:13px;font-weight:600;min-height:40px}
+.tbtn.rescue{background:var(--signal-bg);color:var(--signal);border-color:transparent}
+.deck{flex:1;min-height:0;display:flex;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;overscroll-behavior-x:contain;scrollbar-width:none}
+.deck::-webkit-scrollbar{display:none}
+.card{--surface:rgba(255,255,255,.72);--surface2:rgba(255,255,255,.5);--ink:#14232b;--muted:#3b4e58;--line:rgba(20,35,43,.2);--accent:#0b5a62;--signal:#7a3500;--signal-bg:rgba(255,255,255,.7);background:var(--c);color:var(--ink);flex:0 0 100%;min-width:0;scroll-snap-align:start;scroll-snap-stop:always;overflow-y:auto;overscroll-behavior:contain;padding:18px 16px calc(28px + env(safe-area-inset-bottom,0px))}
+.card>*{max-width:640px;margin-inline:auto}
+.when{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums}
+.when .now{background:var(--accent);color:var(--accent-ink);border-radius:99px;padding:1px 9px;font-size:12px}
+h1{font-family:var(--display);font-size:28px;line-height:1.12;margin:6px 0 10px;text-wrap:balance;font-weight:700}
+.task{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:0 auto 14px}
+.task p{margin:0}
+.lbl{font-size:12px;text-transform:uppercase;letter-spacing:.08em;font-weight:700;color:var(--muted);margin:0 0 4px}
+.meta{display:flex;gap:16px;flex-wrap:wrap;margin-top:8px;font-size:14px;color:var(--muted)}
+.meta b{color:var(--ink);font-weight:600}
+h2{font-family:var(--display);font-size:18px;margin:20px auto 8px;font-weight:600}
+h3{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin:16px auto 6px;font-weight:700}
+ul.qs{list-style:none;margin:0 auto;padding:0;display:grid;gap:8px}
+.q{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;line-height:1.4}
+.note{background:#17303b;color:#fff;border-radius:10px;padding:12px 14px;margin:18px auto 0;font-size:15px;line-height:1.45}
+.note b{color:#ffd28a}
+.listen{margin:0 auto;padding-left:20px;display:grid;gap:4px;color:var(--ink)}
+.seg{display:flex;gap:4px;background:var(--surface2);border-radius:10px;padding:4px;margin:6px auto 4px}
+.seg button{flex:1;border:0;background:transparent;border-radius:7px;padding:8px 4px;font-size:13px;font-weight:600;line-height:1.2;min-height:44px;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.18)}
+.bar{height:3px;background:var(--surface2)}
+.bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .25s}
+.sheet{position:fixed;inset:0;z-index:20;background:rgba(5,15,20,.55);display:flex;align-items:flex-end}
+.sheet[hidden]{display:none}
+.panel{background:var(--bg);width:100%;max-height:86%;overflow-y:auto;border-radius:16px 16px 0 0;padding:16px 16px calc(24px + env(safe-area-inset-bottom,0px))}
+.panel>*{max-width:640px;margin-inline:auto}
+.phead{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.phead h2{margin:0;font-size:20px}
+.close{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 12px;font-weight:600;min-height:40px}
+.ov{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.ov button{width:100%;text-align:left;display:grid;grid-template-columns:104px 1fr;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-height:48px;align-items:center}
+.ov .t{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.ov .on{border-color:var(--accent);box-shadow:inset 3px 0 0 var(--accent)}
+.rule{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin:0 auto 8px}
+.rule b{display:block}
+.rule span{color:var(--muted);font-size:15px}
+.rescue-i{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin:0 auto 8px}
+.rescue-i b{color:var(--signal);display:block;font-size:13px;text-transform:uppercase;letter-spacing:.06em}
+@media (prefers-reduced-motion:reduce){.bar i{transition:none}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="brand">Hyvä työ näkyväksi<small id="posN">Pöytäopas</small></div>
+    <div class="tools">
+      <button class="tbtn rescue" id="bRescue">Jumi</button>
+      <button class="tbtn" id="bRules">Säännöt</button>
+      <button class="tbtn" id="bOv">Ohjelma</button>
+    </div>
+  </header>
+  <div class="bar"><i id="prog"></i></div>
+  <main class="deck" id="deck" aria-label="Työpajan tehtäväkortit"></main>
+</div>
+
+<div class="sheet" id="sOv" hidden><div class="panel" role="dialog" aria-label="Ohjelma">
+  <div class="phead"><h2>Ohjelma</h2><button class="close" data-close>Sulje</button></div>
+  <ul class="ov" id="ovList" style="margin-top:12px"></ul>
+</div></div>
+
+<div class="sheet" id="sRescue" hidden><div class="panel" role="dialog" aria-label="Jos pöytä jumittaa">
+  <div class="phead"><h2>Jos pöytä jumittaa</h2><button class="close" data-close>Sulje</button></div>
+  <div class="rescue-i"><b>Kaikki hiljaisia</b>Kerro, mitä teit viimeksi, kun lähdit töistä tyytyväisenä. Kuka on tehnyt jotain vastaavaa?</div>
+  <div class="rescue-i"><b>Liian yleistä</b>Anna esimerkki viime viikolta. Milloin tämä viimeksi tapahtui?</div>
+  <div class="rescue-i"><b>Valitusta ilman tapausta</b>Mikä yksittäinen tilanne on tyypillinen? Mitä siinä tapahtui?</div>
+  <div class="rescue-i"><b>Vastuun etsintä</b>Mikä työn järjestelyssä esti hyvän lopputuloksen?</div>
+  <div class="rescue-i"><b>Ratkaisuja liian aikaisin</b>Kirjataan idea sivuun. Miten tilanne meni silloin?</div>
+  <div class="rescue-i"><b>Yksi puhuu paljon</b>Kiitos. Miten tämä näyttäytyi sinulle, joka olit eri roolissa?</div>
+  <div class="rescue-i"><b>Kaikki samaa mieltä</b>Onko tilannetta, jossa tämä ei pitänyt paikkaansa? Eri mieltä oleminen kirjataan myös.</div>
+  <div class="rescue-i"><b>Tieto vai arvaus</b>Mistä tiedät? Onko se kokemus vai oletus?</div>
+  <div class="rescue-i"><b>Hyvä työ ei näy</b>Mistä kukaan muu kuin sinä huomaa, että työ on tehty hyvin?</div>
+  <div class="rescue-i"><b>Sana ei sano mitään</b>Milloin viimeksi olit ylpeä jostain, mitä teit töissä? Mitä silloin tapahtui?</div>
+</div></div>
+
+<div class="sheet" id="sRules" hidden><div class="panel" role="dialog" aria-label="Periaatteet">
+  <div class="phead"><h2>Roolisi pöydässä</h2><button class="close" data-close>Sulje</button></div>
+  <div class="rule"><b>Kysy, älä ehdota</b><span>Kokemukset ja asiantuntemus tulevat osallistujilta.</span></div>
+  <div class="rule"><b>Pysy yhdessä tapauksessa</b><span>Palaa tapahtuneeseen: mitä teit, mitä tapahtui.</span></div>
+  <div class="rule"><b>Älä oleta, että mikään on rikki</b><span>Kysy ensin, mikä toimii. Älä päättele, että ongelmat johtuvat asenteesta.</span></div>
+  <div class="rule"><b>Erota tieto ja arvaus</b><span>Kirjataan molemmat, mutta merkitään eri tavalla.</span></div>
+  <div class="rule"><b>Älä lupaa muutoksia</b><span>Knok kokoaa aineiston. Sovitaan, miten tieto palaa heille.</span></div>
+  <div class="rule"><b>Ei nimiä</b><span>Puhutaan tilanteista. Johtoa saa kritisoida työn järjestelyn tasolla.</span></div>
+  <div class="rule"><b>Älä johdattele</b><span>Ei "eikö tiedonkulku ole huono?" vaan "miten tieto kulki?".</span></div>
+  <div class="rule"><b>Ammattiylpeys tiivistettynä</b><span>Tunne siitä, että työ on tehty hyvin ja että sillä on väliä. Syntyy taidosta, näkyvästä jäljestä, merkityksestä, vaikutusmahdollisuudesta ja tunnustuksesta. Heikkenee kiireestä, puutteellisista luovutuksista ja palautteen puutteesta. Harmitus on usein merkki välittämisestä.</span></div>
+</div></div>
+
+<script>
+(function(){
+var THEMES=[
+ {id:'viestinta',short:'Viestintä',name:'Mitä asiakas saa tietää?',
+  listen:['Mitä tietoa oikeasti meni eteenpäin ja mitä jäi tekijän päähän?','Missä muodossa: raportti, suullinen, järjestelmämerkintä, ei mitenkään?','Mikä teki välittämisestä helppoa tai hankalaa: aika, työkalu, ohje, kiire?','Mistä tekijä tietää, että tieto meni perille?'],
+  qs:['Mitä asiakkaan kanssa sovittiin?','Mitä asiakkaalle kerrottiin työn etenemisestä ja lopputuloksesta?','Mitä tehdystä työstä kirjattiin ja minne?','Jos toinen tekijä jatkoi työtä, löysikö hän tarvitsemansa tiedot?','Mikä tiedonkulussa toimi?','Missä tuli hankaluuksia?'],
+  more:['Mitä asiakas tiesi ennen työtä, ja mitä sen jälkeen?','Mitä raportissa tai luovutuksessa tarkalleen luki? Selvisikö siitä, mitä jäi auki?','Kuka kertoi asiakkaalle, milloin ja miten?','Mitä asiakkaan olisi hyvä tietää, mutta ei kerrottu? Miksi ei: ei aikaa, ei paikkaa, ei tullut mieleen?','Mitä tiedon kirjaaminen vaati? Oliko siihen työkalu, ohje ja aikaa?','Jos et olisi ollut paikalla, mistä seuraava tekijä olisi tiedon saanut?','Mikä tieto olisi säästänyt aikaa, jos se olisi ollut käytettävissä?','Jos asiakas lukisi kirjauksenne nyt, mitä hän ymmärtäisi?'],
+  warn:'<b>Varo:</b> "asiakas" voi olla tilaaja, kiinteistön käyttäjä tai seuraava tekijä. Kysy tarvittaessa "kenestä puhumme?". Työkalun, aikataulun tai ohjeen puute voi selittää tilannetta, älä syytä tekijää.'},
+ {id:'tarkoitus',short:'Tarkoitus',name:'Kenen arkea työ helpottaa?',
+  listen:['Kuka tilasi työn ja kuka käyttää tilaa tai järjestelmää?','Tietävätkö tekijät, mitä käyttäjä tarvitsi?','Mistä tieto tarpeesta olisi voinut tulla?','Kuuliko kukaan, miten työ otettiin vastaan?'],
+  qs:['Kuka tilasi työn?','Onko tilaaja sama kuin loppukäyttäjä?','Mitä ongelmaa tällä työllä ratkaistiin?','Keihin ongelma vaikutti?','Mistä tiesitte, mitä he tarvitsivat?','Mitä työn valmistuminen muutti heidän arjessaan, vai tiedämmekö sitä?'],
+  more:['Tunteeko joku pöydässä tilaajan tai käyttäjän? Kysy ensin tätä.','Kuka käyttää tilaa tai järjestelmää joka päivä?','Mistä tieto tarpeesta olisi voinut tulla työn tekijälle?','Mitä pitäisi kysyä heiltä itseltään?','Kuuliko kukaan teistä, miten työ otettiin vastaan?','Mitä hän ei enää tarvitse miettiä?','Kuka olisi huomannut, jos työtä ei olisi tehty?','Mikä oli ennen työtä hankalaa käyttäjälle?'],
+  warn:'<b>Varo:</b> älä keksi asiakkaan tunteita tai tarpeita. Jos tarve ei ollut selvillä, selvittäkää, miten tieto olisi voinut tulla tekijälle.'},
+ {id:'jalki',short:'Työn jälki',name:'Mistä hyvän työn jäljen tunnistaa?',
+  listen:['Mistä tekijä tiesi, että työ oli valmis?','Mitä tarkistettiin ja mitä siitä jäi talteen?','Pystyikö seuraava tekijä jatkamaan työn pohjalta?','Mitä ammattilainen näkee, mitä asiakas ei näe?'],
+  qs:['Miten varmistitte, että tehty työ toimi kuten piti?','Mitä tarkistitte ennen työn päättämistä?','Jäikö jotain kesken, ja miten se sovittiin hoidettavaksi?','Mikä auttoi tekemään työn huolellisesti tai vaikeutti sitä?','Mistä tiedätte, että työ on valmis?','Pystyykö seuraava tekijä jatkamaan työnne pohjalta?'],
+  more:['Mitä tarkistuksesta jäi talteen?','Mikä teki tarkistamisesta hankalaa tai jäi tekemättä?','Mitä ammattilainen huomaa työn jäljestä, jota asiakas ei huomaa?','Oliko tilannetta, jossa keskeneräisyyden tai virheen sanominen ääneen oli hyvää työtä?','Mitä uusi tekijä oppisi katsomalla tätä työtä?','Miltä huolellinen lopputulos näyttää juuri tässä työssä?','Mitä tekisit toisin, jos aikaa olisi enemmän?'],
+  warn:'<b>Muista:</b> tekninen asiantuntemus tulee osallistujilta. Pyydä heitä kertomaan, mistä he tunnistavat toimivan lopputuloksen.'}
+];
+var CARDS=[
+ {t:'Oma esimerkki',time:'10:00–10:05',s:600,e:605,
+  task:'Jokainen kirjoittaa yksin A5-lapulle yhden viime aikojen työtilanteen.',
+  out:'Yksi lappu per osallistuja',
+  groups:[{h:'Jos ei keksi tilannetta',q:['Mikä käynti tai työ viime viikoilta tulee ensimmäisenä mieleen?','Milloin viimeksi lähdit työmaalta hyvällä mielellä?','Entä milloin jokin jäi harmittamaan?','Tuleeko mieleen luovutus, käyttöönotto tai vian selvitys?']},{h:'Jos tilanne on liian iso',q:['Mikä yksi käynti tai hetki siitä oli tyypillisin?','Mistä päivästä aloittaisit, jos kertoisit sen kaverille?']}],
+  note:'<b>Muista:</b> hyvä tai hankala kokemus käy yhtä hyvin. Arkinen tilanne riittää.'},
+ {t:'Parikeskustelu',time:'10:05–10:13',s:605,e:613,
+  task:'Parit kertovat vuorotellen, mitä tapahtui. Lappu tarkentuu.',
+  out:'Tarkennettu henkilökohtainen lappu',
+  groups:[{h:'Auta kuuntelijaa kysymään',q:['Mikä sai sinut valitsemaan juuri sen ratkaisun?','Mitä vaihtoehtoja oli?','Mitä olisit voinut tehdä toisin, jos aikaa olisi ollut enemmän?','Mitä uusi tekijä oppisi tästä kuulemalla?']},{h:'Jos kertoja jää yleiselle tasolle',q:['Anna esimerkki: mitä sinä silloin tarkalleen teit?','Milloin tämä viimeksi tapahtui?']}]},
+ {t:'Tapauksen valinta',time:'10:13–10:25',s:613,e:625,
+  task:'Jokainen kertoo lyhyesti esimerkkinsä. Pöytä valitsee yhden riittävän rajatun todellisen tapauksen.',
+  out:'Valittu tapaus, nimi ja pöytänumero A2-arkilla',
+  groups:[{h:'Auta valinnassa',q:['Mistä näistä tapauksista riittää sanottavaa 20 minuutiksi?','Kenelle on tapahtunut jotain, mistä muut oppisivat?','Mikä tapaus sopii pöydän teemaan?','Mikä tapaus kiinnostaa pöytää eniten?']},{h:'Nimeämiseen',q:['Mikä olisi tapauksen lyhyt nimi, esimerkiksi "Lämpöpumppujen muuttunut toimitus"?']}],
+  note:'<b>Muista:</b> tavallinen työpäivän tilanne riittää. Ryhmän ei tarvitse tuntea työmaata.'},
+ {t:'Tapauksen kuvaus',time:'10:25–10:45',s:625,e:645,
+  task:'Tilanteen kokenut kertoo, muut kysyvät ja täydentävät. Kirjuri kokoaa tapahtumien kulun A2-arkille kolmessa vaiheessa.',
+  out:'Yksi yhteinen kuvaus todellisesta tilanteesta',
+  groups:[
+   {h:'Aluksi',q:['Kuka työn tilasi, ja kenelle se tehtiin?','Mitä tiesitte työstä ennen kuin aloititte?','Missä tilanteessa tai aikataulussa työ tehtiin?']},
+   {h:'Työn aikana',q:['Mitä teitte ensin? Entä sen jälkeen?','Mitä muita vaihtoehtoja mietitte?','Tuliko jotain yllättävää?','Kuka muu oli mukana?']},
+   {h:'Lopuksi',q:['Kuka vahvisti, että työ onnistui?','Kuuliko tekijä koskaan, miten asiakas koki lopputuloksen?']},
+   {h:'Jos kertominen jumittaa',q:['Aloitetaan päivän alusta: mihin aikaan saavuit paikalle?','Mitä näit ensimmäisenä?','Kuka soitti tai kirjoitti sinulle ensin?','Palataan alkuun: mitä silloin tapahtui?']}],
+  note:'<b>Muista:</b> parannuksia ei vielä tarvitse keksiä, vain selvittää, mitä tapahtui. Kirjurille: kirjataan myös se, mikä jäi epäselväksi.'},
+ {t:'Jaloittelu',time:'10:45–10:50',s:645,e:650,
+  task:'Jaloittelu. Paperit jäävät pöydille.',
+  out:'Ei tuotosta',
+  groups:[{h:'Tarkista pöydältäsi',q:['Onko tapaus yksi rajattu tilanne, ei koko projekti?','Onko siinä tapahtumien kulku: mitä tehtiin ja missä järjestyksessä?','Onko kirjattu, mikä jäi epäselväksi?','Onko pöytänumero ja tapauksen nimi arkin yläreunassa?']}]},
+ {t:'Tapauksen tutkiminen',time:'10:50–11:30',s:650,e:690,theme:true,
+  task:'Sama tapaus jatkuu oman teeman kautta. Jatketaan juuri kuvatun tilanteen käsittelyä ja keskustellaan teemakysymyksistä oman tapauksen pohjalta. Kirjuri kirjoittaa vastaukset toiselle A2-arkille kysymysten alle. Jos jotain ei tiedetä, se merkitään kysymykseksi.',
+  out:'Toinen A2-arkki: vastaukset kysymysten alle, tietämättömät asiat kysymyksinä'},
+ {t:'Havainto jatkoon',time:'11:30–11:45',s:690,e:705,
+  task:'Valitkaa omasta tapauksestanne yksi havainto, jota haluatte työstää lounaan jälkeen. Kertokaa se lyhyesti kaikille. Enintään minuutti per pöytä. Kirjaukset jäävät pöydälle.',
+  out:'Valittu havainto kirjattuna, yksi nosto per pöytä',
+  groups:[{h:'Auta valinnassa',q:['Mikä asia nousi keskustelussa eniten esiin?','Mikä asia on sellainen, jonka muutkin tunnistaisivat omasta arjestaan?','Jos iltapäivällä ehtisitte käsitellä vain yhden asian, mikä se olisi?','Mistä pöydässä oltiin eniten samaa mieltä? Mistä eri mieltä?']}],
+  note:'<b>Muista:</b> asian ei tarvitse olla ongelma. Toimiva käytäntö, hankaluus tai avoin kysymys käy. Jos asia koskee johtoa, sen saa sanoa työn järjestelyn tasolla ilman nimiä.'},
+ {t:'Lounas',time:'11:45–12:45',s:705,e:765,
+  task:'Lounas. Sovittu lyhyt aineiston tarkistus, fasilitaattoreille myös ruokatauko.',
+  out:'Molemmat A2:t ja A5-paperit jäävät pöydälle',
+  groups:[{h:'Tarkista pöydältäsi',q:['Ovatko A2-arkit luettavissa ilman selittäjää?','Puuttuuko pöytänumero tai tapauksen nimi?','Onko irralliset A5-laput koottu klipsillä?','Onko tuotokset valokuvattu sovitun käytännön mukaan?']}],
+  note:'<b>Muista:</b> älä järjestä tai kiteytä aineistoa valmiiden konseptien mukaan.'},
+ {t:'Mihin jäimme',time:'12:45–12:50',s:765,e:770,
+  task:'Palatkaa ennen lounasta valitsemaanne havaintoon. Varmistakaa yhdessä, mitä sillä tarkoitatte. Seuraavaksi mietitte, mitä sen perusteella kannattaisi tehdä.',
+  out:'Yhteinen tilanne mielessä',
+  groups:[{h:'Auta palaamaan',q:['Mistä jatkatte?','Onko aamuun tullut lisäystä tai tarkennusta?','Voisiko havainnon sanoa yhdellä lauseella?','Kertoisiko joku esimerkin tapauksesta, joka kuvaa havaintoa?']}],
+  note:'<b>Muista:</b> eriävät näkemykset pysyvät aineistossa.'},
+ {t:'Ehdotus jatkoon',time:'12:50–13:20',s:770,e:800,
+  task:'Kirjatkaa vastauksenne A3-arkille: mitä ehdotatte, miten se auttaisi ja mitä eteneminen vaatii. Kirjoittakaa niin selkeästi, että muutkin pöydät ymmärtävät ehdotuksenne.',
+  out:'A3-ehdotusarkki: otsikko, ehdotus, perustelu, A/B-laatikot',
+  groups:[
+   {h:'Jos ehdotus ei synny',q:['Mitä tekisitte maanantaina, jos saisitte päättää itse?','Mikä on pienin asia, jonka voisi kokeilla ensi viikolla?','Onko jokin jo toimivaksi todettu käytäntö, jota kannattaisi levittää muualle?','Mikä muuttaisi tilanteen, jos sen saisi ratkaistua yhdellä asialla?']},
+   {h:'Jos ratkaisua ei vielä löydy',q:['Mikä kysymys pitäisi selvittää ensin?','Kuka tietäisi vastauksen?']},
+   {h:'Tarkistus ennen valmista',q:['Ymmärtäisikö ulkopuolinen tämän arkin ilman, että kukaan selittää?']}],
+  note:'<b>Muista:</b> ratkaisut kuuluvat vasta tähän vaiheeseen.'},
+ {t:'Muiden pöytien ehdotukset',time:'13:20–13:35',s:800,e:815,
+  task:'Jättäkää ehdotus pöydälle ja raivatkaa muut paperit sen vierestä. Kiertäkää pöytäryhmittäin tutustumassa muiden ehdotuksiin ja tehkää kaksi valintaa: yksi A (eniten hyötyä asiakkaalle) ja yksi B (kokeiltava ensin).',
+  out:'A- ja B-merkinnät A3-arkeilla',
+  groups:[{h:'Jos valinta on vaikea',q:['Tunnistatko ongelman omasta työstäsi?','Mitä tämä ehdotus ratkaisisi teidän työssänne?','Mikä veisi tämän käytäntöön nopeimmin?','Mitä et ymmärrä ehdotuksesta ilman selitystä?']}],
+  note:'<b>Muista:</b> suosiosta ei päätellä tärkeintä. Merkin saa jättää käyttämättä, jos ei pysty arvioimaan.'},
+ {t:'Mitä tästä eteenpäin',time:'13:35–13:45',s:815,e:825,
+  task:'Yhteinen keskustelu valinnoista ja perusteluista. Sovitaan, miten tieto palaa osallistujille.',
+  out:'Yhteinen sopimus jatkosta',
+  groups:[{h:'Jos pöydässä kysytään, mitä tästä seuraa',q:['Knok kokoaa päivän asiat ja ehdotukset yhteen.','Sovitaan yhdessä, miten kuulette, mitä niille tapahtuu.','Minkä asian käsittelystä olisi sinulle ollut hyötyä?']}],
+  note:'<b>Muista:</b> älä lupaa muutoksia, joista ei ole sovittu.'}
+];
+
+var deck=document.getElementById('deck'), cur=0, theme='viestinta';
+function safe(fn){try{return fn()}catch(e){return null}}
+theme=safe(function(){return localStorage.getItem('pa-theme')})||'viestinta';
+if(!THEMES.some(function(t){return t.id===theme}))theme='viestinta';
+
+function qlist(items,key){
+  return '<ul class="qs">'+items.map(function(q,i){
+    var k=key+'-'+i;
+    return '<li class="q">'+q+'</li>';
+  }).join('')+'</ul>';
+}
+function themeBlock(i){
+  var T=THEMES.filter(function(t){return t.id===theme})[0];
+  return '<div class="seg" data-seg>'+THEMES.map(function(t){return '<button data-tid="'+t.id+'" aria-pressed="'+(t.id===theme)+'">'+t.short+'</button>'}).join('')+'</div>'+
+    '<h2>'+T.name+'</h2>'+
+    '<h3>Mitä kuuntelet</h3><ul class="listen">'+T.listen.map(function(x){return '<li>'+x+'</li>'}).join('')+'</ul>'+
+    '<h3>Jos keskustelu ei etene</h3>'+qlist(T.more,'c'+i+T.id+'m')+
+    '<div class="note">'+T.warn+'</div>';
+}
+function cardHtml(c,i){
+  var h='<div class="when"><span>'+c.time+' · '+(c.e-c.s)+' min</span><span class="now" hidden data-now="'+i+'">Nyt</span></div>'+
+   '<h1>'+c.t+'</h1>'+
+   '<div class="task"><p class="lbl">Tehtävä</p><p>'+c.task+'</p><div class="meta"><span><b>Tuotos:</b> '+c.out+'</span></div></div>';
+  if(c.theme){h+=themeBlock(i)}
+  else{
+    (c.groups||[]).forEach(function(g,gi){h+='<h3>'+g.h+'</h3>'+qlist(g.q,'c'+i+'g'+gi)});
+    if(c.note)h+='<div class="note">'+c.note+'</div>';
+  }
+  return h;
+}
+function render(){
+  deck.innerHTML='';
+  CARDS.forEach(function(c,i){
+    var s=document.createElement('section');s.className='card';s.style.setProperty('--c','hsl('+Math.round(i*360/CARDS.length+150)%360+',72%,85%)');s.id='card'+i;s.innerHTML=cardHtml(c,i);deck.appendChild(s);
+  });
+  renderOv();
+}
+function renderCard(i){
+  var s=document.getElementById('card'+i), top=s.scrollTop;
+  s.innerHTML=cardHtml(CARDS[i],i);s.scrollTop=top;markNow();
+}
+function renderOv(){
+  document.getElementById('ovList').innerHTML=CARDS.map(function(c,i){
+    return '<li><button data-go="'+i+'" class="'+(i===cur?'on':'')+'"><span class="t">'+c.time+'<br>'+(c.e-c.s)+' min</span><span>'+c.t+'</span></button></li>';
+  }).join('');
+}
+function minutesNow(){
+  var d=new Date();
+  if(d.getFullYear()!==2026||d.getMonth()!==9||d.getDate()!==30)return null;
+  return d.getHours()*60+d.getMinutes();
+}
+function markNow(){
+  var m=minutesNow();
+  document.querySelectorAll('[data-now]').forEach(function(el){
+    var c=CARDS[+el.dataset.now];el.hidden=!(m!==null&&m>=c.s&&m<c.e);
+  });
+}
+function update(){
+  var i=Math.round(deck.scrollLeft/deck.clientWidth);
+  i=Math.max(0,Math.min(CARDS.length-1,i));
+  cur=i;
+  document.getElementById('posN').textContent=(i+1)+' / '+CARDS.length+' · '+CARDS[i].t;
+  document.getElementById('prog').style.width=((i+1)/CARDS.length*100)+'%';
+  renderOv();
+}
+function go(i,smooth){
+  i=Math.max(0,Math.min(CARDS.length-1,i));
+  deck.scrollTo({left:i*deck.clientWidth,behavior:smooth===false?'auto':'smooth'});
+}
+function setTheme(id){
+  theme=id;safe(function(){localStorage.setItem('pa-theme',id)});
+  CARDS.forEach(function(c,i){if(c.theme)renderCard(i)});
+  renderOv();
+}
+var tick;
+deck.addEventListener('scroll',function(){clearTimeout(tick);tick=setTimeout(update,60)});
+document.addEventListener('keydown',function(e){if(e.key==='ArrowRight')go(cur+1);if(e.key==='ArrowLeft')go(cur-1)});
+function open(id){document.getElementById(id).hidden=false}
+function closeAll(){document.querySelectorAll('.sheet').forEach(function(s){s.hidden=true})}
+document.getElementById('bOv').onclick=function(){open('sOv')};
+document.getElementById('bRescue').onclick=function(){open('sRescue')};
+document.getElementById('bRules').onclick=function(){open('sRules')};
+document.addEventListener('click',function(e){
+  var t=e.target;
+  var th=t.closest('[data-tid]');if(th){setTheme(th.dataset.tid);return}
+  var g=t.closest('[data-go]');if(g){closeAll();go(+g.dataset.go,false);return}
+  if(t.closest('[data-close]')||t.classList.contains('sheet'))closeAll();
+});
+window.addEventListener('resize',function(){go(cur,false)});
+
+render();markNow();
+var m=minutesNow(),start=0;
+if(m!==null){CARDS.forEach(function(c,i){if(m>=c.s&&m<c.e&&true)start=i})}
+update();
+if(start){requestAnimationFrame(function(){go(start,false)})}
+setInterval(markNow,60000);
+})();
+</script>
+
+</body>
+</html>
